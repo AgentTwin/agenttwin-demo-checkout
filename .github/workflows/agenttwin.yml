@@ -1,0 +1,26 @@
+# AgentTwin: what each pull request does to the systems your agents touch.
+# Reruns locked twin checks from the base branch against the PR, and flags
+# changed code that reaches Stripe, Slack, Salesforce and other services.
+name: AgentTwin
+on:
+  pull_request:
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+jobs:
+  agenttwin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: AgentTwin check
+        run: npx --yes agenttwin@0.3.25 check --github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

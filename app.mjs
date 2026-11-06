@@ -1,7 +1,7 @@
 // Synthetic checkout reference application. All endpoints are run-scoped twins.
 const customer = 'cus_demo_customer';
-const headers = { authorization: `Bearer ${process.env.AGENTTWIN_STRIPE_TOKEN}`, 'content-type': 'application/x-www-form-urlencoded' };
-// BUG: a committed payment may be retried as a second payment after a timeout.
+const headers = { authorization: `Bearer ${process.env.AGENTTWIN_STRIPE_TOKEN}`, 'content-type': 'application/x-www-form-urlencoded', 'idempotency-key': 'order_demo' };
+// The same logical order retains its key when the response times out.
 const charge = signal => fetch(`${process.env.AGENTTWIN_STRIPE_URL}/v1/payment_intents`, {
   method: 'POST', headers, signal,
   body: new URLSearchParams({ amount: '1200', currency: 'usd', customer, payment_method: 'pm_card_visa', confirm: 'true' }),

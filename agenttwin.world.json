@@ -1,0 +1,95 @@
+{
+  "schema": "agenttwin/world-v1",
+  "name": "checkout_retry",
+  "files": [
+    "app.mjs"
+  ],
+  "command": [
+    "node",
+    "app.mjs"
+  ],
+  "timeoutSeconds": 8,
+  "services": [
+    {
+      "name": "stripe",
+      "adapter": "stripe",
+      "collections": [
+        {
+          "path": "/v1/customers",
+          "seed": [
+            {
+              "id": "cus_demo_customer",
+              "object": "customer",
+              "email": "buyer@example.invalid"
+            }
+          ]
+        },
+        {
+          "path": "/v1/payment_intents",
+          "seed": []
+        }
+      ]
+    },
+    {
+      "name": "slack",
+      "adapter": "slack",
+      "collections": [
+        {
+          "path": "/channels",
+          "seed": [
+            {
+              "id": "C_DEMO",
+              "name": "checkout-test"
+            }
+          ]
+        },
+        {
+          "path": "/messages",
+          "seed": []
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "service": "stripe",
+      "path": "/v1/payment_intents",
+      "count": 1
+    },
+    {
+      "service": "stripe",
+      "path": "/v1/payment_intents",
+      "count": 1,
+      "where": {
+        "customer": "cus_demo_customer",
+        "status": "succeeded"
+      }
+    },
+    {
+      "service": "slack",
+      "path": "/messages",
+      "count": 1,
+      "where": {
+        "channel": "C_DEMO"
+      }
+    }
+  ],
+  "preservedState": [
+    {
+      "id": "customer_unchanged",
+      "service": "stripe",
+      "path": "/v1/customers"
+    },
+    {
+      "id": "channel_unchanged",
+      "service": "slack",
+      "path": "/channels"
+    }
+  ],
+  "fault": {
+    "service": "stripe",
+    "path": "/v1/payment_intents",
+    "type": "timeout-after-write",
+    "delayMs": 1000
+  }
+}
